@@ -1,4 +1,5 @@
 import test from 'ava'
+import path from 'path'
 import { createFluentSchema } from '../src'
 
 interface Context {
@@ -22,8 +23,9 @@ test('FluentSchema', async ({ truthy, is }) => {
     user: t('User!').resolver((...params) => {
       const [source] = params
       return {
-        id: source!.userId,
+        id: source.userId,
         name: 'f',
+        posts: [],
       }
     }),
   }))
@@ -53,4 +55,11 @@ test('FluentSchema', async ({ truthy, is }) => {
 
   truthy(fluentSchema)
   is(fluentSchema.makeExecutableSchema(), undefined)
+
+  await fluentSchema.emitTsSchema(
+    path.resolve(__dirname, '__generated__/fluent-graphql-schema.ts'),
+    {
+      moduleName: '../../src',
+    },
+  )
 })

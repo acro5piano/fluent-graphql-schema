@@ -1,3 +1,7 @@
+// eslint-disable
+
+type Maybe<T> = T | null | undefined
+
 export interface User {
   id: string
   name: string
@@ -6,21 +10,20 @@ export interface User {
 
 export interface Post {
   id: string
-  name: string
+  title: string
   userId: string
   user: User
 }
 
 export interface Query {
   users: User[]
+  user: Maybe<User>
 }
-
-export interface Schema {}
 
 declare module '../../src' {
   interface FluentSchemaTypes {
-    Query: any
-    User: { id: string; name: string }
-    Post: { id: string; title: string; userId: string }
+    User: User
+    Post: Post
+    Query: Query
   }
 }

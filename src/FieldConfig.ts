@@ -1,7 +1,7 @@
 import type { ResolverFn } from './types'
 
 export class FieldConfig<TResult, TSource, TArgs, TContext> {
-  constructor(public typeName: string) {}
+  constructor(public resultTypeName: string, public sourceTypeName: string) {}
 
   resolver(_fn: ResolverFn<TResult, TSource, TArgs, TContext>) {
     return this
@@ -9,13 +9,14 @@ export class FieldConfig<TResult, TSource, TArgs, TContext> {
 
   args<T extends object>(_args: T) {
     return new FieldConfigWithArgs<TResult, TSource, Plain<T>, TContext>(
-      this.typeName,
+      this.resultTypeName,
+      this.sourceTypeName,
     )
   }
 }
 
 export class FieldConfigWithArgs<TResult, TSource, TArgs, TContext> {
-  constructor(public typeName: string) {}
+  constructor(public resultTypeName: string, public sourceTypeName: string) {}
 
   resolver(_fn: ResolverFn<TResult, TSource, TArgs, TContext>) {
     return this
