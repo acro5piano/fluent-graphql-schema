@@ -7,19 +7,18 @@ export function createFluentSchema<TContext>() {
 }
 
 export class FluentSchema<TContext> {
-  t = <TResultTypeName extends string, TSourceTypeName>(
-    typeName: TResultTypeName,
-  ) => {
-    return new FieldConfig<
-      GetJsTypeFromGraphQLType<TResultTypeName>,
-      GetJsTypeFromGraphQLType<TSourceTypeName>,
-      {},
-      TContext
-    >(typeName)
-  }
-
-  type: any = <TResultTypeName extends string>(
-    fn: (t: Builder<TResultTypeName>) => any,
+  type = <TSourceTypeName extends string>(
+    _typeName: TSourceTypeName,
+    _fn: (
+      t: <TResultTypeName extends string>(
+        typeName: TResultTypeName,
+      ) => FieldConfig<
+        GetJsTypeFromGraphQLType<TResultTypeName>,
+        GetJsTypeFromGraphQLType<TSourceTypeName>,
+        {},
+        TContext
+      >,
+    ) => any,
   ) => {}
 
   makeExecutableSchema: any = () => {}

@@ -1,6 +1,5 @@
 import test from 'ava'
 import { createFluentSchema } from '../src'
-import * as Schema from './__generated__/fluent-graphql-schema'
 
 interface Context {
   reqId: string
@@ -8,34 +7,33 @@ interface Context {
 
 test('FluentSchema', async ({ truthy, is }) => {
   const fluentSchema = createFluentSchema<Context>()
-  const { type, t } = fluentSchema
+  const { type } = fluentSchema
 
-  type('User', {
+  type('User', (t) => ({
     id: t('ID!'),
     name: t('String!'),
     posts: t('[Post!]!'),
-  })
+  }))
 
-  type('Post', {
+  type('Post', (t) => ({
     id: t('ID!'),
     title: t('String!'),
     userId: t('String!'),
-    user: t<'User!', 'Post!'>('User!').resolver((...params) => {
+    user: t('User!').resolver((...params) => {
       const [source] = params
       return {
-        id: source.userId,
+        id: source!.userId,
         name: 'f',
       }
     }),
-  })
+  }))
 
-  type('Query', {
+  type('Query', (t) => ({
     users: t('[User!]!')
       .args({ name: t('String') })
       .resolver(async (...params) => {
         const [_source, args, ctx] = params
         ctx.reqId
-
         return [
           {
             id: '1',
@@ -51,7 +49,7 @@ test('FluentSchema', async ({ truthy, is }) => {
         args.name
         return null
       }),
-  })
+  }))
 
   truthy(fluentSchema)
   is(fluentSchema.makeExecutableSchema(), undefined)
