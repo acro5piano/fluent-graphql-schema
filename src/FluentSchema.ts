@@ -12,13 +12,15 @@ export class FluentSchema<TContext> {
   ) => {
     return new FieldConfig<
       GetJsTypeFromGraphQLType<TResultTypeName>,
-      TSourceTypeName,
+      GetJsTypeFromGraphQLType<TSourceTypeName>,
       {},
       TContext
     >(typeName)
   }
 
-  type: any = () => {}
+  type: any = <TResultTypeName extends string>(
+    fn: (t: Builder<TResultTypeName>) => any,
+  ) => {}
 
   makeExecutableSchema: any = () => {}
 }

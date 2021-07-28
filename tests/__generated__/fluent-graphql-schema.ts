@@ -7,6 +7,7 @@ export interface User {
 export interface Post {
   id: string
   name: string
+  userId: string
   user: User
 }
 
@@ -20,6 +21,6 @@ declare module '../../src' {
   interface FluentSchemaTypes {
     Query: any
     User: { id: string; name: string }
-    Post: { id: string; title: string }
+    Post: { id: string; title: string; userId: string }
   }
 }

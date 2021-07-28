@@ -1,5 +1,6 @@
 import test from 'ava'
 import { createFluentSchema } from '../src'
+import * as Schema from './__generated__/fluent-graphql-schema'
 
 interface Context {
   reqId: string
@@ -19,7 +20,7 @@ test('FluentSchema', async ({ truthy, is }) => {
     id: t('ID!'),
     title: t('String!'),
     userId: t('String!'),
-    user: t('User!').resolver((...params) => {
+    user: t<'User!', 'Post!'>('User!').resolver((...params) => {
       const [source] = params
       return {
         id: source.userId,
