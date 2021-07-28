@@ -12,19 +12,18 @@ test('FluentSchema', async ({ truthy, is }) => {
 
   type('User', (t) => ({
     id: t('ID!'),
-    name: t('String!'),
+    name: t('String'),
     posts: t('[Post!]!'),
   }))
 
   type('Post', (t) => ({
     id: t('ID!'),
     title: t('String!'),
-    userId: t('String!'),
-    user: t('User!').resolver((...params) => {
+    userId: t('String!').resolver(() => 'a'),
+    user: t('User!').resolver(async (...params) => {
       const [source] = params
       return {
         id: source.userId,
-        name: 'f',
         posts: [],
       }
     }),
@@ -40,7 +39,6 @@ test('FluentSchema', async ({ truthy, is }) => {
           {
             id: '1',
             name: args.name || 'no name',
-            posts: [],
           },
         ]
       }),

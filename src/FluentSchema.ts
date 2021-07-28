@@ -1,6 +1,7 @@
 import { FieldConfig } from './FieldConfig'
 import { keys } from './utils'
-import type { Maybe, Definite } from './types'
+import type { Maybe, Definite, PlainResolvableObject } from './types'
+import { baseSchemaCode, gqlTypeToTsType } from './codegen'
 import fs from 'fs/promises'
 
 export interface FluentSchemaTypes {}
@@ -25,7 +26,7 @@ export class FluentSchema<TContext> {
       t: <TResultTypeName extends string>(
         typeName: TResultTypeName,
       ) => FieldConfig<
-        GetJsTypeFromGraphQLType<TResultTypeName>,
+        PlainResolvableObject<GetJsTypeFromGraphQLType<TResultTypeName>>,
         Definite<GetJsTypeFromGraphQLType<TSourceTypeName>>,
         {},
         TContext
@@ -35,12 +36,10 @@ export class FluentSchema<TContext> {
     const t = <TResultTypeName extends string>(
       resultTypeName: TResultTypeName,
     ) => {
-      return new FieldConfig<
-        GetJsTypeFromGraphQLType<TResultTypeName>,
-        Definite<GetJsTypeFromGraphQLType<TSourceTypeName>>,
-        {},
-        TContext
-      >(resultTypeName, sourceTypeName)
+      return new FieldConfig<unknown, any, {}, TContext>(
+        resultTypeName,
+        sourceTypeName,
+      )
     }
     const a = fn(t)
     this.jsTypeMap.set(sourceTypeName, a)
@@ -61,7 +60,9 @@ export class FluentSchema<TContext> {
       code += `\n\nexport interface ${typeName} {`
       keys(fieldConfig).forEach((key) => {
         const config = fieldConfig[key]!
-        code += `\n  ${key}: ${gqlTypeToTsType(config.resultTypeName)}`
+        const tsType = gqlTypeToTsType(config.resultTypeName)
+        const mark = tsType.includes('Maybe') ? '?' : ''
+        code += `\n  ${key}${mark}: ${gqlTypeToTsType(config.resultTypeName)}`
       })
       code += `\n}`
       queue.push(() => {
@@ -72,41 +73,6 @@ export class FluentSchema<TContext> {
     queue.forEach((fn) => fn())
     code += `\n  }\n}\n`
     return code
-  }
-}
-
-const baseSchemaCode = `// eslint-disable
-
-type Maybe<T> = T | null | undefined`
-
-function gqlTypeToTsType(gqlType: string) {
-  switch (gqlType) {
-    case 'String!':
-      return 'string'
-    case 'String':
-      return 'Maybe<string>'
-    case 'ID!':
-      return 'string' // TODO: specify IDType
-    case 'ID':
-      return 'Maybe<string>'
-    default:
-      const matchNonNullArray = gqlType.match(/\[(.+)\!]!$/)
-      if (matchNonNullArray) {
-        return `${matchNonNullArray[1]}[]`
-      }
-      const matchNullableArray = gqlType.match(/\[(.+)\!]$/)
-      if (matchNullableArray) {
-        return `Maybe<${matchNullableArray[1]}[]>`
-      }
-      const maybeMatchNullableArray = gqlType.match(/\[(.+)\]$/)
-      if (maybeMatchNullableArray) {
-        return `Maybe<Maybe<${maybeMatchNullableArray[1]}>[]>`
-      }
-      const nonNullableType = gqlType.match(/(.+)!$/)
-      if (nonNullableType) {
-        return `${nonNullableType[1]}`
-      }
-      return `Maybe<${gqlType}>`
   }
 }
 

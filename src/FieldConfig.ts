@@ -7,7 +7,7 @@ export class FieldConfig<TResult, TSource, TArgs, TContext> {
     return this
   }
 
-  args<T extends object>(_args: T) {
+  args<T>(_args: T) {
     return new FieldConfigWithArgs<TResult, TSource, Plain<T>, TContext>(
       this.resultTypeName,
       this.sourceTypeName,
