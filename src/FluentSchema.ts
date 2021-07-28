@@ -1,4 +1,5 @@
 import { FieldConfig } from './FieldConfig'
+import type { Maybe } from './types'
 
 export interface FluentSchemaTypes {}
 
@@ -59,5 +60,3 @@ type GetJsTypeFromGraphQLType<T> = T extends 'String!'
       : never
     : never
   : never
-
-type Maybe<T> = T | undefined | null | void
