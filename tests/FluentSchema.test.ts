@@ -58,8 +58,22 @@ test('FluentSchema', async ({ snapshot }) => {
             posts {
               id
               title
+              user {
+                id
+                name
+              }
             }
           }
+        }
+      `,
+    )
+    .then(snapshot)
+
+  await fluentSchema
+    .graphql(
+      gql`
+        query {
+          invalidQuery
         }
       `,
     )
