@@ -46,6 +46,8 @@ test('FluentSchema', async ({ snapshot }) => {
     },
   )
 
+  snapshot(fluentSchema.printGraphQLSchema())
+
   await fluentSchema
     .graphql(
       gql`

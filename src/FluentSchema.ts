@@ -1,6 +1,15 @@
 import { FieldConfig } from './FieldConfig'
-import { keys } from './utils'
-import type { Maybe, Definite, PlainResolvableObject } from './types'
+import {
+  GraphQLSchema,
+  GraphQLObjectType,
+  GraphQLFieldConfigMap,
+  isObjectType,
+  GraphQLOutputType,
+  printSchema,
+  graphql,
+} from 'graphql'
+import { keys, gqlStringTypeToGraphQLType } from './utils'
+import type { Maybe, Definite, PlainResolvableObject, JsType } from './types'
 import { baseSchemaCode, gqlTypeToTsType } from './codegen'
 import fs from 'fs/promises'
 
@@ -15,10 +24,9 @@ export interface EmitTsSchemaOption {
 }
 
 export class FluentSchema<TContext> {
-  private jsTypeMap = new Map<
-    string,
-    Record<string, FieldConfig<any, any, any, any>>
-  >()
+  public grahpQLSchema?: GraphQLSchema
+  private jsTypeMap = new Map<string, JsType>()
+  private graphqlTypeMap = new Map<string, GraphQLOutputType>()
 
   type = <TSourceTypeName extends TypeNameInSchema>(
     sourceTypeName: TSourceTypeName,
@@ -36,7 +44,7 @@ export class FluentSchema<TContext> {
     const t = <TResultTypeName extends TypeNameInSchema>(
       resultTypeName: TResultTypeName,
     ) => {
-      return new FieldConfig<unknown, any, {}, TContext>(
+      return new FieldConfig<any, any, {}, TContext>(
         resultTypeName,
         sourceTypeName,
       )
@@ -45,7 +53,73 @@ export class FluentSchema<TContext> {
     this.jsTypeMap.set(sourceTypeName, a)
   }
 
-  makeExecutableSchema() {}
+  makeExecutableSchema() {
+    this.jsTypeMap.forEach((jsType, typeName) => {
+      this.graphqlTypeMap.set(
+        typeName,
+        this.buildGraphQLSchemaFromObjectType(typeName, jsType),
+      )
+    })
+
+    const query = this.graphqlTypeMap.get('Query')
+    if (!query) {
+      throw new Error(`You need to define Query type`)
+    }
+
+    if (!isObjectType(query)) {
+      throw new Error(`Invalid query type`)
+    }
+
+    this.grahpQLSchema = new GraphQLSchema({
+      query,
+    })
+  }
+
+  buildGraphQLSchemaFromObjectType(typeName: string, jsType: JsType) {
+    return new GraphQLObjectType({
+      name: typeName,
+      fields: () => {
+        return keys(jsType).reduce((objectType, key) => {
+          const fieldConfig = jsType[key]
+          if (!fieldConfig) {
+            throw new Error(`Can't find field config: ${key}`)
+          }
+          const type = gqlStringTypeToGraphQLType(
+            fieldConfig.resultTypeName,
+            this.graphqlTypeMap,
+          )
+          if (!type) {
+            throw new Error(`Can't find type: ${type}`)
+          }
+          return {
+            ...objectType,
+            [key]: {
+              type,
+              args: fieldConfig.getGraphQLArgs(),
+              resolve: fieldConfig.resolve,
+            },
+          }
+        }, {} as GraphQLFieldConfigMap<any, any>)
+      },
+    })
+  }
+
+  graphql(source: string) {
+    if (!this.grahpQLSchema) {
+      throw new Error(`Schema is not configured`)
+    }
+    return graphql({
+      source,
+      schema: this.grahpQLSchema,
+    })
+  }
+
+  printGraphQLSchema() {
+    if (!this.grahpQLSchema) {
+      throw new Error(`Schema is not configured`)
+    }
+    return printSchema(this.grahpQLSchema)
+  }
 
   async emitTsSchema(path: string, options: EmitTsSchemaOption = {}) {
     await fs.writeFile(path, this.toTsSchema(options), 'utf8')

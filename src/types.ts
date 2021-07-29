@@ -1,5 +1,6 @@
 import { GraphQLResolveInfo } from 'graphql'
 import type { PickByValue, OmitByValue } from 'utility-types'
+import type { FieldConfig } from './FieldConfig'
 
 export type ResolverFn<TResult, TSource, TArgs, TContext> = (
   source: TSource,
@@ -21,3 +22,5 @@ export type PlainResolvableObject<T> = T extends Array<infer E>
   : T extends object
   ? PickByValue<T, JsScalar> & Partial<OmitByValue<T, JsScalar>>
   : T
+
+export type JsType = Record<string, FieldConfig<any, any, any, any>>
