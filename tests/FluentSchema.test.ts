@@ -1,58 +1,43 @@
 import test from 'ava'
 import path from 'path'
 import { createFluentSchema } from '../src'
+import { db } from './fixtures'
+import { gql } from './utils'
 
 interface Context {
   reqId: string
 }
 
-test('FluentSchema', async ({ truthy, is }) => {
+test('FluentSchema', async ({ snapshot }) => {
   const fluentSchema = createFluentSchema<Context>()
   const { type } = fluentSchema
 
   type('User', (t) => ({
     id: t('ID!'),
     name: t('String'),
-    posts: t('[Post!]!'),
+    posts: t('[Post!]!').resolver((user) => db.postsByUserId(user.id)),
   }))
 
   type('Post', (t) => ({
     id: t('ID!'),
     title: t('String!'),
     userId: t('String!').resolver(() => 'a'),
-    user: t('User!').resolver(async (...params) => {
-      const [source] = params
-      return {
-        id: source.userId,
-        posts: [],
-      }
+    user: t('User!').resolver((source) => {
+      return db.userById(source.userId)
     }),
   }))
 
   type('Query', (t) => ({
-    users: t('[User!]!')
-      .args({ name: t('String') })
-      .resolver(async (...params) => {
-        const [_source, args, ctx] = params
-        ctx.reqId
-        return [
-          {
-            id: '1',
-            name: args.name || 'no name',
-          },
-        ]
-      }),
+    users: t('[User!]!').resolver(() => db.users()),
     user: t('User')
       .args({ name: t('String') })
       .resolver(async (...params) => {
         const [, args] = params
-        args.name
-        return null
+        return db.userByName(args.name)
       }),
   }))
 
-  truthy(fluentSchema)
-  is(fluentSchema.makeExecutableSchema(), undefined)
+  fluentSchema.makeExecutableSchema()
 
   await fluentSchema.emitTsSchema(
     path.resolve(__dirname, '__generated__/fluent-graphql-schema.ts'),
@@ -60,4 +45,21 @@ test('FluentSchema', async ({ truthy, is }) => {
       moduleName: '../../src',
     },
   )
+
+  await fluentSchema
+    .graphql(
+      gql`
+        query {
+          users {
+            id
+            name
+            posts {
+              id
+              title
+            }
+          }
+        }
+      `,
+    )
+    .then(snapshot)
 })

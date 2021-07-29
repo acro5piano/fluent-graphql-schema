@@ -1,6 +1,6 @@
 // eslint-disable
 
-type Maybe<T> = T | null | undefined
+export type Maybe<T> = T | null | undefined | void
 
 export interface User {
   id: string
