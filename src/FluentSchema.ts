@@ -20,10 +20,10 @@ export class FluentSchema<TContext> {
     Record<string, FieldConfig<any, any, any, any>>
   >()
 
-  type = <TSourceTypeName extends string>(
+  type = <TSourceTypeName extends TypeNameInSchema>(
     sourceTypeName: TSourceTypeName,
     fn: (
-      t: <TResultTypeName extends string>(
+      t: <TResultTypeName extends TypeNameInSchema>(
         typeName: TResultTypeName,
       ) => FieldConfig<
         PlainResolvableObject<GetJsTypeFromGraphQLType<TResultTypeName>>,
@@ -33,7 +33,7 @@ export class FluentSchema<TContext> {
       >,
     ) => any,
   ) => {
-    const t = <TResultTypeName extends string>(
+    const t = <TResultTypeName extends TypeNameInSchema>(
       resultTypeName: TResultTypeName,
     ) => {
       return new FieldConfig<unknown, any, {}, TContext>(
@@ -75,6 +75,27 @@ export class FluentSchema<TContext> {
     return code
   }
 }
+
+type TypeNameInSchema =
+  | 'ID'
+  | 'ID!'
+  | 'Boolean'
+  | 'Boolean!'
+  | 'String'
+  | 'String!'
+  | 'Int'
+  | 'Int!'
+  | 'Float'
+  | 'Float!'
+  | keyof FluentSchemaTypes
+  | MatrixGraphQLTypeString<keyof FluentSchemaTypes>
+
+type MatrixGraphQLTypeString<T extends string> =
+  | T
+  | `${T}!`
+  | `[${T}]`
+  | `[${T}!]`
+  | `[${T}!]!`
 
 type GetJsTypeFromGraphQLType<T> = T extends 'String!'
   ? string
