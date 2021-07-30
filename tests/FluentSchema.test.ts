@@ -30,7 +30,7 @@ test('FluentSchema', async ({ snapshot }) => {
   type('Query', (t) => ({
     users: t('[User!]!').resolver(() => db.users()),
     user: t('User')
-      .args({ name: t('String') })
+      .args({ name: t('String'), id: t('Int!') })
       .resolver(async (...params) => {
         const [, args] = params
         return db.userByName(args.name)

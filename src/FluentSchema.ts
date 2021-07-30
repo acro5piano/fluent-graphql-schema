@@ -47,6 +47,7 @@ export class FluentSchema<TContext> {
       return new FieldConfig<any, any, {}, TContext>(
         resultTypeName,
         sourceTypeName,
+        {},
       )
     }
     const a = fn(t)
@@ -95,7 +96,7 @@ export class FluentSchema<TContext> {
             ...objectType,
             [key]: {
               type,
-              args: fieldConfig.getGraphQLArgs(),
+              args: fieldConfig.getGraphQLArgs(this.jsTypeMap),
               resolve: fieldConfig.resolve,
             },
           }

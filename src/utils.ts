@@ -5,6 +5,7 @@ import {
   GraphQLNonNull,
   GraphQLList,
   GraphQLOutputType,
+  GraphQLInt,
 } from 'graphql'
 
 export function keys<T>(obj: T): Array<keyof T> {
@@ -26,6 +27,10 @@ export function gqlStringTypeToGraphQLType(
     return type
   }
   switch (gqlType) {
+    case 'Int!':
+      return new GraphQLNonNull(GraphQLInt)
+    case 'Int':
+      return GraphQLInt
     case 'Boolean!':
       return new GraphQLNonNull(GraphQLBoolean)
     case 'Boolean':
